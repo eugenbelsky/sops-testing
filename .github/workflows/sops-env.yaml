@@ -45,4 +45,4 @@ jobs:
           done < <(yq -r 'to_entries | .[] | "\(.key)=\(.value)"' decrypted.yaml)
 
           echo "✅ Env vars exported:"
-          env 
+          env | grep -E 'mykey1|mykey2|mykey3'
