@@ -1,0 +1,4 @@
+creation_rules:
+  - path_regex: secrets/env_vars.encrypted
+    kms: arn:aws:kms:eu-north-1:634188077282:key/75438e65-f8df-4a4d-b086-1bf60cc6c2ac
+    encrypted_regex: '^(?!#).*'
