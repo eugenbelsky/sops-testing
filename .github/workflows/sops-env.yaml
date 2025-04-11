@@ -1,0 +1,37 @@
+name: SOPS Env Test (KMS)
+
+on:
+  push:
+    paths:
+      - secrets/env_vars.encrypted.yaml
+      - .github/workflows/sops-env.yaml
+
+jobs:
+  decrypt-and-print-env:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          echo "AWS credentials set"
+
+      - name: Install sops and yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg wget
+          wget -qO /usr/local/bin/sops https://github.com/getsops/sops/releases/download/v3.8.1/sops-v3.8.1.linux.amd64
+          chmod +x /usr/local/bin/sops
+          pip install yq
+
+      - name: Decrypt and export env vars
+        run: |
+          eval $(sops -d secrets/env_vars.encrypted.yaml | yq -r 'to_entries | .[] | "export \(.key)=\(.value)"')
+          echo "Printing env variables:"
+          env 

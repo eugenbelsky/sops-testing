@@ -4,5 +4,5 @@
 
 How to edit
 ```bash
-sops secrets/env_vars
+sops secrets/env_vars.encrypted.yaml
 ```
