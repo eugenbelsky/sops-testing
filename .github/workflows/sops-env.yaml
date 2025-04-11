@@ -21,13 +21,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install sops and yq
+      - name: Check access to KMS
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gnupg wget
-          wget -qO /usr/local/bin/sops https://github.com/getsops/sops/releases/download/v3.8.1/sops-v3.8.1.linux.amd64
-          chmod +x /usr/local/bin/sops
-          pip install yq
+          echo "Checking access to KMS key..."
+
+          KMS_KEY_ARN="arn:aws:kms:eu-north-1:634188077282:key/75438e65-f8df-4a4d-b086-1bf60cc6c2ac"
+
+          aws kms decrypt \
+            --key-id "$KMS_KEY_ARN" \
+            --ciphertext-blob fileb://<(echo "test" | openssl enc -e -aes-256-cbc -K 00000000000000000000000000000000 -iv 00000000000000000000000000000000 -nosalt | base64 -d 2>/dev/null) \
+            --output text \
+            --query Plaintext || {
+              echo "❌ Unable to decrypt using KMS key: $KMS_KEY_ARN"
+              exit 1
+            }
+
+          echo "✅ KMS access check passed"
+
+        - name: Install sops and yq
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y gnupg wget
+            wget -qO /usr/local/bin/sops https://github.com/getsops/sops/releases/download/v3.8.1/sops-v3.8.1.linux.amd64
+            chmod +x /usr/local/bin/sops
+            pip install yq
 
       - name: Decrypt and export env vars
         run: |
