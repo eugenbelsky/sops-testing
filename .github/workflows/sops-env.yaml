@@ -31,11 +31,18 @@ jobs:
           chmod +x /usr/local/bin/sops
           pip install yq
           ls -la
-      - name: 🔍 Decrypt with SOPS (no piping, just test)
-        run: sops -d secrets/env_vars.encrypted.yaml
-      # - name: Decrypt and export env vars
-      #   run: |
-      #     eval $(sops -d secrets/env_vars.encrypted.yaml | yq -r 'to_entries | .[] | "export \(.key)=\(.value)"')
-      #     echo "Printing env variables:"
-      #     env 
+      - name: Decrypt and export env vars
+        run: |
+          echo "Decrypting env vars..."
+          sops -d secrets/env_vars.encrypted.yaml > decrypted.yaml || {
+            echo "❌ Failed to decrypt"
+            exit 1
+          }
 
+          echo "Parsing and exporting..."
+          while IFS="=" read -r key value; do
+            export "$key=$value"
+          done < <(yq -r 'to_entries | .[] | "\(.key)=\(.value)"' decrypted.yaml)
+
+          echo "✅ Env vars exported:"
+          env 
