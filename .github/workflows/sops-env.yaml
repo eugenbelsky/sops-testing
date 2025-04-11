@@ -34,3 +34,4 @@ jobs:
           eval $(sops -d secrets/env_vars.encrypted.yaml | yq -r 'to_entries | .[] | "export \(.key)=\(.value)"')
           echo "Printing env variables:"
           env 
+
